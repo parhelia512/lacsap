@@ -3322,6 +3322,10 @@ void Parser::CheckProtoMatch(const PrototypeAST* proto, const std::string& funcN
 	{
 	    Error("Argument type mismatch for " + funcName + ":" + args[i].Name());
 	}
+	if (proto->Args()[i + offset].IsRef() != args[i].IsRef())
+	{
+	    Error("Argument 'var' mismatch for " + funcName + ":" + args[i].Name());
+	}
     }
     if (proto->Type() != resType)
     {
