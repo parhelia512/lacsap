@@ -311,7 +311,7 @@ namespace Types
 
     llvm::Type* PointerDecl::GetLlvmType() const
     {
-	return llvm::PointerType::getUnqual(baseType->LlvmType());
+	return llvm::PointerType::getUnqual(theContext);
     }
 
     llvm::DIType* PointerDecl::GetDIType(llvm::DIBuilder* builder) const
@@ -427,8 +427,7 @@ namespace Types
 	static llvm::Type* dynTy = 0;
 	if (!dynTy)
 	{
-	    llvm::Type* ty = baseType->LlvmType();
-	    llvm::Type* ptrTy = llvm::PointerType::getUnqual(ty);
+	    llvm::Type* ptrTy = llvm::PointerType::getUnqual(theContext);
 	    llvm::Type* intTy = Get<IntegerDecl>()->LlvmType();
 	    dynTy = llvm::StructType::create({ ptrTy, intTy, intTy }, "confArray");
 	}
@@ -654,6 +653,11 @@ namespace Types
 
     void FieldCollection::EnsureSized() const
     {
+	if (!lType)
+	{
+	    [[maybe_unused]] llvm::Type* ty = LlvmType();
+	    ICE_IF(!ty, "Expected to get LLVM Type here");
+	}
 	if (opaqueType && opaqueType->isOpaque())
 	{
 	    [[maybe_unused]] llvm::Type* ty = GetLlvmType();
@@ -1093,7 +1097,7 @@ namespace Types
 	if (VTableType(Opaque))
 	{
 	    vtableoffset = 1;
-	    fv.push_back(llvm::PointerType::getUnqual(vtableType));
+	    fv.push_back(llvm::PointerType::getUnqual(theContext));
 	}
 
 	int fc = FieldCount();
@@ -1155,19 +1159,17 @@ namespace Types
 
     llvm::Type* FuncPtrDecl::GetLlvmType() const
     {
-	llvm::Type*              resty = proto->Type()->LlvmType();
 	std::vector<llvm::Type*> argTys;
 	for (auto v : proto->Args())
 	{
 	    llvm::Type* ty = v.Type()->LlvmType();
 	    if (v.IsRef() || IsCompound(v.Type()))
 	    {
-		ty = llvm::PointerType::getUnqual(ty);
+		ty = llvm::PointerType::getUnqual(theContext);
 	    }
 	    argTys.push_back(ty);
 	}
-	llvm::Type* ty = llvm::FunctionType::get(resty, argTys, false);
-	return llvm::PointerType::getUnqual(ty);
+	return llvm::PointerType::getUnqual(theContext);
     }
 
     llvm::DIType* FuncPtrDecl::GetDIType(llvm::DIBuilder* builder) const
@@ -1206,7 +1208,7 @@ namespace Types
      */
     llvm::Type* FileDecl::GetLlvmType() const
     {
-	llvm::Type*              ty = llvm::PointerType::getUnqual(baseType->LlvmType());
+	llvm::Type*              ty = llvm::PointerType::getUnqual(theContext);
 	llvm::Type*              intTy = Get<IntegerDecl>()->LlvmType();
 	std::vector<llvm::Type*> fv = { intTy, ty, intTy, intTy };
 	return llvm::StructType::create(fv, Type() == TK_Text ? "text" : "file");
@@ -1350,8 +1352,7 @@ namespace Types
     // Void pointer is not a "pointer to void", but a "pointer to Int8".
     llvm::Type* GetVoidPtrType()
     {
-	llvm::Type* base = llvm::IntegerType::getInt8Ty(theContext);
-	return llvm::PointerType::getUnqual(base);
+	return llvm::PointerType::getUnqual(theContext);
     }
 
     bool IsNumeric(const TypeDecl* t)

@@ -41,7 +41,7 @@ namespace Builtin
 	llvm::Value*         res = CreateTempAlloca(Types::Get<Types::ComplexDecl>());
 	llvm::Value*         a = args[0]->CodeGen();
 	llvm::Type*          ty = args[0]->Type()->LlvmType();
-	llvm::Type*          pty = llvm::PointerType::getUnqual(ty);
+	llvm::Type*          pty = llvm::PointerType::getUnqual(theContext);
 	llvm::FunctionCallee f = GetFunction(Types::Get<Types::VoidDecl>()->LlvmType(), { pty, ty },
 	                                     "__c" + func);
 	builder.CreateCall(f, { res, a });
@@ -1784,7 +1784,7 @@ namespace Builtin
 	llvm::Type*  realTy = Types::Get<Types::RealDecl>()->LlvmType();
 
 	llvm::Type*  cplxTy = Types::Get<Types::ComplexDecl>()->LlvmType();
-	llvm::Type*  pCplxTy = llvm::PointerType::getUnqual(cplxTy);
+	llvm::Type*  pCplxTy = llvm::PointerType::getUnqual(theContext);
 	llvm::Value* res = CreateTempAlloca(Types::Get<Types::ComplexDecl>());
 
 	llvm::FunctionCallee f = GetFunction(Types::Get<Types::VoidDecl>()->LlvmType(),

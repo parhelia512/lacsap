@@ -549,7 +549,7 @@ llvm::Value* DynArrayExprAST::Address()
 
     llvm::Type* dynTy = Types::DynArrayDecl::GetArrayType(Type());
     llvm::Type* elemTy = Type()->LlvmType();
-    llvm::Type* elemPtrTy = llvm::PointerType::getUnqual(elemTy);
+    llvm::Type* elemPtrTy = llvm::PointerType::getUnqual(theContext);
     v = builder.CreateGEP(dynTy, v, MakeIntegerConstant(0), "ptr");
     v = builder.CreateLoad(elemPtrTy, v, "ptrLoad");
     return builder.CreateGEP(elemTy, v, idx, "valueIndex");
@@ -606,7 +606,7 @@ llvm::Value* VariantFieldExprAST::Address()
     llvm::Value* v = MakeAddressable(expr);
     llvm::Type*  ty = expr->Type()->LlvmType();
     v = builder.CreateGEP(ty, v, { MakeIntegerConstant(0), MakeIntegerConstant(element) }, "valueindex");
-    return builder.CreateBitCast(v, llvm::PointerType::getUnqual(Type()->LlvmType()));
+    return builder.CreateBitCast(v, llvm::PointerType::getUnqual(theContext));
 }
 
 void VariantFieldExprAST::accept(ASTVisitor& v)
@@ -647,7 +647,7 @@ llvm::Value* FilePointerExprAST::Address()
     ICE_IF(!vptr, "Expected variable expression!");
     llvm::Value* v = vptr->Address();
     llvm::Type*  fileTy = pointer->Type()->LlvmType();
-    llvm::Type*  ptrTy = llvm::PointerType::getUnqual(Type()->LlvmType());
+    llvm::Type*  ptrTy = llvm::PointerType::getUnqual(theContext);
     v = builder.CreateGEP(fileTy, v, { MakeIntegerConstant(0), MakeIntegerConstant(Types::FileDecl::Buffer) },
                           "bufptr");
     return builder.CreateLoad(ptrTy, v, "buffer");
@@ -771,7 +771,7 @@ llvm::Value* BinaryExprAST::CallSetFunc(const std::string& name, Types::TypeDecl
     ICE_IF(!rV || !lV, "Should have generated values for left and right set");
 
     llvm::Type*  setTy = type->LlvmType();
-    llvm::Type*  pty = llvm::PointerType::getUnqual(setTy);
+    llvm::Type*  pty = llvm::PointerType::getUnqual(theContext);
     llvm::Value* setWords = MakeIntegerConstant(type->SetWords());
     llvm::Type*  intTy = setWords->getType();
     if (llvm::isa<Types::SetDecl>(resTy))
@@ -842,8 +842,7 @@ static llvm::Value* CallStrCat(ExprAST* lhs, ExprAST* rhs)
     llvm::Value* rV = MakeStringFromExpr(rhs, rhs->Type());
     llvm::Value* lV = MakeStringFromExpr(lhs, lhs->Type());
 
-    llvm::Type* strTy = Types::Get<Types::StringDecl>(255)->LlvmType();
-    llvm::Type* pty = llvm::PointerType::getUnqual(strTy);
+    llvm::Type* pty = llvm::PointerType::getUnqual(theContext);
 
     llvm::FunctionCallee f = GetFunction(Types::Get<Types::VoidDecl>()->LlvmType(),
                                          { pty, lV->getType(), rV->getType() }, "__StrConcat");
@@ -870,7 +869,7 @@ llvm::Value* BinaryExprAST::CallArrFunc(const std::string& name, size_t size)
 
     // Result is integer.
     llvm::Type* resTy = Types::Get<Types::IntegerDecl>()->LlvmType();
-    llvm::Type* pty = llvm::PointerType::getUnqual(Types::Get<Types::CharDecl>()->LlvmType());
+    llvm::Type* pty = llvm::PointerType::getUnqual(theContext);
 
     lV = builder.CreateBitCast(lV, pty);
     rV = builder.CreateBitCast(rV, pty);
@@ -1343,7 +1342,7 @@ static llvm::Value* ComplexBinExpr(llvm::Value* l, llvm::Value* r, const Token& 
     case Token::Power:
     {
 	llvm::Value* res = CreateTempAlloca(Types::Get<Types::ComplexDecl>());
-	llvm::Type*  pcty = llvm::PointerType::getUnqual(cmplxTy);
+	llvm::Type*  pcty = llvm::PointerType::getUnqual(theContext);
 
 	llvm::FunctionCallee      f = GetFunction(Types::Get<Types::VoidDecl>()->LlvmType(),
 	                                          { pcty, cmplxTy, realTy }, "__cpow");
@@ -1625,8 +1624,7 @@ static std::vector<llvm::Value*> CreateArgList(const std::vector<ExprAST*>& args
 	if (llvm::isa<Types::DynArrayDecl>(vdef[index].Type()))
 	{
 	    auto        aty = llvm::dyn_cast<Types::ArrayDecl>(i->Type());
-	    llvm::Type* elemTy = aty->SubType()->LlvmType();
-	    llvm::Type* ptrTy = llvm::PointerType::getUnqual(elemTy);
+	    llvm::Type* ptrTy = llvm::PointerType::getUnqual(theContext);
 
 	    llvm::Type* dynTy = Types::DynArrayDecl::GetArrayType(aty->SubType());
 
@@ -1691,7 +1689,7 @@ static std::vector<llvm::Type*> CreateArgTypes(const std::vector<VarDef>& args)
 
 	if (i.IsRef() || IsCompound(i.Type()))
 	{
-	    argTy = llvm::PointerType::getUnqual(argTy);
+	    argTy = llvm::PointerType::getUnqual(theContext);
 	}
 
 	argTypes.push_back(argTy);
@@ -2879,14 +2877,14 @@ static llvm::FunctionCallee CreateWriteFunc(Types::TypeDecl* ty, llvm::Type* fty
     }
     else if (llvm::isa<Types::StringDecl>(ty))
     {
-	llvm::Type* pty = llvm::PointerType::getUnqual(Types::Get<Types::CharDecl>()->LlvmType());
+	llvm::Type* pty = llvm::PointerType::getUnqual(theContext);
 	argTypes.push_back(pty);
 	argTypes.push_back(intTy);
 	suffix = "str";
     }
     else if (IsCharArray(ty))
     {
-	llvm::Type* pty = llvm::PointerType::getUnqual(Types::Get<Types::CharDecl>()->LlvmType());
+	llvm::Type* pty = llvm::PointerType::getUnqual(theContext);
 	argTypes.push_back(pty);
 	argTypes.push_back(intTy);
 	argTypes.push_back(intTy);
@@ -2931,7 +2929,7 @@ static llvm::Value* MakeEnumToString(Types::EnumDecl* etype)
 
     llvm::Constant* str = builder.CreateGlobalString(bigStr, "enumString", 0, theModule);
 
-    llvm::Type*       ptrTy = llvm::PointerType::getUnqual(Types::Get<Types::CharDecl>()->LlvmType());
+    llvm::Type*       ptrTy = llvm::PointerType::getUnqual(theContext);
     llvm::Type*       intTy = Types::Get<Types::IntegerDecl>()->LlvmType();
     llvm::ArrayType*  arrTy = llvm::ArrayType::get(intTy, nelems);
     llvm::StructType* e2sTy = llvm::StructType::create({ ptrTy, intTy, arrTy });
@@ -3112,7 +3110,7 @@ void ReadAST::accept(ASTVisitor& v)
 static llvm::FunctionCallee CreateReadFunc(Types::TypeDecl* ty, llvm::Type* fty, ReadAST::ReadKind kind)
 {
     std::string              suffix;
-    llvm::Type*              lty = llvm::PointerType::getUnqual(ty->LlvmType());
+    llvm::Type*              lty = llvm::PointerType::getUnqual(theContext);
     std::vector<llvm::Type*> argTypes = { fty, lty };
     if (auto rd = llvm::dyn_cast<Types::RangeDecl>(ty))
     {
@@ -3896,9 +3894,8 @@ llvm::Value* RangeCheckAST::CodeGen()
     std::vector<llvm::Value*> args = { builder.CreateGlobalString(Loc().FileName()),
 	                               MakeIntegerConstant(Loc().LineNumber()), MakeIntegerConstant(start),
 	                               MakeIntegerConstant(end), orig_index };
-    std::vector<llvm::Type*>  argTypes = {
-        llvm::PointerType::getUnqual(Types::Get<Types::CharDecl>()->LlvmType()), intTy, intTy, intTy, intTy
-    };
+    std::vector<llvm::Type*>  argTypes = { llvm::PointerType::getUnqual(theContext), intTy, intTy, intTy,
+	                                   intTy };
 
     llvm::FunctionCallee fn = GetFunction(Types::Get<Types::VoidDecl>()->LlvmType(), argTypes, "range_error");
 
@@ -4011,7 +4008,7 @@ llvm::Value* TypeCastAST::CodeGen()
     }
     if (llvm::isa<Types::ClassDecl>(type) && llvm::isa<Types::ClassDecl>(current))
     {
-	llvm::Type* ty = llvm::PointerType::getUnqual(type->LlvmType());
+	llvm::Type* ty = llvm::PointerType::getUnqual(theContext);
 	return builder.CreateLoad(ty, builder.CreateBitCast(Address(), ty));
     }
     if (llvm::isa<Types::CharDecl>(type) && llvm::isa<Types::CharDecl>(current))
@@ -4086,7 +4083,7 @@ llvm::Value* TypeCastAST::Address()
 	return builder.CreateGEP(type->LlvmType(), v, MakeIntegerConstant(1));
     }
 
-    return builder.CreateBitCast(v, llvm::PointerType::getUnqual(type->LlvmType()));
+    return builder.CreateBitCast(v, llvm::PointerType::getUnqual(theContext));
 }
 
 llvm::Value* SizeOfExprAST::CodeGen()
@@ -4200,7 +4197,7 @@ llvm::Value* VirtFunctionAST::Address()
     llvm::Value* v = MakeAddressable(self);
     llvm::Type*  ty = self->Type()->LlvmType();
     auto         vtableTy = llvm::dyn_cast<Types::ClassDecl>(self->Type())->VTableType(Types::FilledIn);
-    llvm::Type*  ptrVTableTy = llvm::PointerType::getUnqual(vtableTy);
+    llvm::Type*  ptrVTableTy = llvm::PointerType::getUnqual(theContext);
     llvm::Value* zero = MakeIntegerConstant(0);
     v = builder.CreateGEP(ty, v, { zero, zero }, "vptr");
     v = builder.CreateLoad(ptrVTableTy, v, "vtable");
@@ -4557,7 +4554,7 @@ llvm::Value* ArraySliceAST::Address()
     llvm::Value* index = builder.CreateSub(low, MakeIntegerConstant(start));
     llvm::Value* ptr = builder.CreateGEP(elemTy, v, index);
 
-    return builder.CreateBitCast(ptr, llvm::PointerType::getUnqual(type->LlvmType()));
+    return builder.CreateBitCast(ptr, llvm::PointerType::getUnqual(theContext));
 }
 
 llvm::Value* ArraySliceAST::Size()

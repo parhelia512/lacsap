@@ -64,7 +64,7 @@ static void CreateObject(llvm::Module* module, const std::string& objname)
 
     std::string         error;
     llvm::Triple        triple = llvm::Triple(module->getTargetTriple());
-    const llvm::Target* target = llvm::TargetRegistry::lookupTarget(triple.getTriple(), error);
+    const llvm::Target* target = llvm::TargetRegistry::lookupTarget(triple, error);
 
     if (!target)
     {
@@ -81,7 +81,7 @@ static void CreateObject(llvm::Module* module, const std::string& objname)
     llvm::TargetOptions                  options;
     std::string                          FeaturesStr = GetFeatureString();
     std::unique_ptr<llvm::TargetMachine> tm(
-        target->createTargetMachine(triple.getTriple(), mcpu, FeaturesStr, options, llvm::Reloc::PIC_));
+        target->createTargetMachine(triple, mcpu, FeaturesStr, options, llvm::Reloc::PIC_));
 
     if (!tm)
     {
@@ -194,9 +194,9 @@ llvm::Module* CreateModule()
     {
 	triple = triple.get64BitArchVariant();
     }
-    module->setTargetTriple(triple.getTriple());
+    module->setTargetTriple(triple);
     std::string         error;
-    const llvm::Target* target = llvm::TargetRegistry::lookupTarget(triple.getTriple(), error);
+    const llvm::Target* target = llvm::TargetRegistry::lookupTarget(triple, error);
     if (!target)
     {
 	std::cerr << "Error, could not find target: " << error << std::endl;
@@ -207,7 +207,7 @@ llvm::Module* CreateModule()
     llvm::TargetOptions                  options;
     std::string                          mcpu = llvm::codegen::getMCPU();
     std::unique_ptr<llvm::TargetMachine> tm(
-        target->createTargetMachine(triple.getTriple(), mcpu, FeaturesStr, options, llvm::Reloc::Static));
+        target->createTargetMachine(triple, mcpu, FeaturesStr, options, llvm::Reloc::Static));
     ICE_IF(!tm, "Could not create TargetMachine");
     const llvm::DataLayout dl = tm->createDataLayout();
     module->setDataLayout(dl);
