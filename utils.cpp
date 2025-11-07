@@ -1,6 +1,6 @@
 #include "utils.h"
+#include <climits>
 #include <iostream>
-#include <limits.h>
 
 std::string GetPath(const std::string& filename)
 {
