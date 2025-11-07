@@ -48,6 +48,26 @@ namespace Builtin
 	return builder.CreateLoad(ty, res);
     }
 
+    void FunctionBase::dump() const
+    {
+	std::cerr << Name();
+	if (args.size() > 0)
+	{
+	    std::cerr << "(";
+	    bool first = true;
+	    for (const auto& a : args)
+	    {
+		if (!first)
+		{
+		    std::cerr << ", ";
+		    first = false;
+		}
+		a->dump();
+	    }
+	    std::cerr << ")";
+	}
+    }
+
     template<typename TY>
     class FunctionType : public FunctionBase
     {

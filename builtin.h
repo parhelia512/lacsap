@@ -29,6 +29,7 @@ namespace Builtin
 	virtual ErrorType        Semantics() = 0;
 	virtual void             accept(ASTVisitor& v);
 	const std::string&       Name() const { return name; }
+	void                     dump() const;
 	virtual ~FunctionBase() {}
 
     protected:

@@ -4106,7 +4106,9 @@ void BuiltinExprAST::DoDump() const
 {
     std::cerr << "Builtin(";
     type->DoDump();
-    std::cerr << ")" << std::endl;
+    std::cerr << ") ";
+    bif->dump();
+    std::cerr << std::endl;
 }
 
 llvm::Value* BuiltinExprAST::CodeGen()
