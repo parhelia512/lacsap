@@ -81,8 +81,10 @@ debugtests: lacsap tests
 	${MAKE} -C test debugtests M32=${M32}
 
 
-.phony: llvmversion
-llvmversion:
+.phony: FORCE
+FORCE:
+
+llvmversion: FORCE
 	./llvm_version_info.sh > $@
 
 clean:
