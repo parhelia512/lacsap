@@ -904,6 +904,14 @@ Types::TypeDecl* BinaryExprAST::Type() const
 
     ICE_IF(!lhs->Type(), "Should have types here...");
 
+    // The operations divide (/) and power (**) produces a real value, even when the lhs is an integer.
+    // If the lhs is not an integer, then we should use the lhs type (only valid for REAL and COMPLEX, but
+    // if it's something else, it will be flagged elswehere)
+    if ((oper.GetToken() == Token::Divide || oper.GetToken() == Token::Power) && IsIntegral(lhs->Type()))
+    {
+	return Types::Get<Types::RealDecl>();
+    }
+
     // Last resort, return left type.
     return lhs->Type();
 }

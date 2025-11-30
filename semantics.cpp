@@ -330,7 +330,7 @@ Types::TypeDecl* TypeCheckVisitor::BinaryExprType(BinaryExprAST* b)
     case Token::Power:
 	if (!Types::IsNumeric(lty) || !Types::IsNumeric(rty))
 	{
-	    Error(b, "Invalid (non-numeric) type for divide or power");
+	    Error(b, "Invalid (non-numeric) type for power");
 	}
 
 	if (llvm::isa<Types::ComplexDecl>(lty))

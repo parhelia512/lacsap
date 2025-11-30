@@ -22,3 +22,5 @@ This is a list of "things to improve in general".
 - ConstASTVisitor?
 
 - Could do with better error recovery.
+
+- Check that for-loop doesn't alter the value or use variable in different scope.
