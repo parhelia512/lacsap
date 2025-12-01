@@ -412,9 +412,10 @@ namespace Types
 			return 0;
 		    }
 		}
+		return this;
 	    }
 	}
-	return this;
+	return 0;
     }
 
     TypeDecl* ArrayDecl::Clone() const

@@ -527,7 +527,8 @@ TestEntry negativeCaseList[] = { { 0, "CompErr", "Goto err", "goto.pas", "" },
                                  { 0, "CompErr", "Protected variable", "prot.pas", "" },
                                  { 0, "CompErr", "Non-integer precision and width", "writewidth.pas", "" },
                                  { 0, "CompErr", "Assign real to integer via divide", "assigndiv.pas", "" },
-                                 { 0, "CompErr", "Assign real to integer via power", "assignpow.pas", "" } };
+                                 { 0, "CompErr", "Assign real to integer via power", "assignpow.pas", "" },
+                                 { 0, "CompErr", "Array argumen error", "arrargs.pas", "" } };
 
 void runTestCases(const std::vector<TestCase*>& tc, TestResult& res, const std::string& options)
 {

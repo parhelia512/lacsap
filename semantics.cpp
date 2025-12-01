@@ -752,7 +752,7 @@ void TypeCheckVisitor::Check<CallExprAST>(CallExprAST* c)
 	}
 	if (bad)
 	{
-	    Error(c, "Incompatible argument type " + std::to_string(idx));
+	    Error(c, "Incompatible type for argument " + std::to_string(idx + 1));
 	}
 	idx++;
     }
