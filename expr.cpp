@@ -3872,7 +3872,7 @@ llvm::Value* RangeCheckAST::CodeGen()
     llvm::Type*  intTy = Types::Get<Types::IntegerDecl>()->LlvmType();
 
     auto rr = llvm::dyn_cast<Types::RangeDecl>(range);
-    ICE_IF(rr, "Expect a rangedecl here");
+    ICE_IF(!rr, "Expect a rangedecl here");
     int start = rr->Start();
     if (start)
     {
